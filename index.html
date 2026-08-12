@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>拼图工坊</title>
+<style>
+/* ===== 主题（清新换色，body[data-theme] 切换） ===== */
+:root, body[data-theme="classic"]{
+  --bg1:#5a4632; --bg2:#7a6248; --panel:#f5ecdc; --panel2:#efe2c8;
+  --ink:#4a3b28; --accent:#e8734a; --accent2:#f0a35e;
+  --ok:#5e8c61; --shadow:0 6px 18px rgba(40,25,10,.35);
+  --bar:rgba(40,25,10,.35); --barBtn:rgba(245,236,220,.16); --barTxt:#f5ecdc; --barHover:rgba(245,236,220,.28);
+}
+body[data-theme="mint"]{
+  --bg1:#b8e0d0; --bg2:#dcf3e7; --panel:#ffffff; --panel2:#edf7f2;
+  --ink:#3a6b58; --accent:#3fae82; --accent2:#7fd0a8;
+  --ok:#3fae82; --shadow:0 6px 18px rgba(40,110,80,.15);
+  --bar:rgba(255,255,255,.5); --barBtn:rgba(58,107,88,.12); --barTxt:#3a6b58; --barHover:rgba(58,107,88,.2);
+}
+body[data-theme="sky"]{
+  --bg1:#a8d4ef; --bg2:#d9edfa; --panel:#ffffff; --panel2:#eef6fc;
+  --ink:#3a5a72; --accent:#4a9fd8; --accent2:#84c4ea;
+  --ok:#4a9fd8; --shadow:0 6px 18px rgba(40,90,130,.15);
+  --bar:rgba(255,255,255,.5); --barBtn:rgba(58,90,114,.12); --barTxt:#3a5a72; --barHover:rgba(58,90,114,.2);
+}
+body[data-theme="peach"]{
+  --bg1:#f6c9c0; --bg2:#fde6df; --panel:#fffdfb; --panel2:#fdf0ec;
+  --ink:#7a4a40; --accent:#ef7e6a; --accent2:#f7ab95;
+  --ok:#e67a5e; --shadow:0 6px 18px rgba(160,70,50,.15);
+  --bar:rgba(255,255,255,.5); --barBtn:rgba(122,74,64,.12); --barTxt:#7a4a40; --barHover:rgba(122,74,64,.2);
+}
+body[data-theme="lemon"]{
+  --bg1:#f5e2a2; --bg2:#fdf4cd; --panel:#ffffff; --panel2:#fdf7e2;
+  --ink:#6e5a20; --accent:#e0b43c; --accent2:#f0d074;
+  --ok:#c9a12e; --shadow:0 6px 18px rgba(150,120,30,.15);
+  --bar:rgba(255,255,255,.5); --barBtn:rgba(110,90,32,.12); --barTxt:#6e5a20; --barHover:rgba(110,90,32,.2);
+}
+body[data-theme="lavender"]{
+  --bg1:#d3c6ef; --bg2:#ece5fa; --panel:#ffffff; --panel2:#f4f0fc;
+  --ink:#5a4a80; --accent:#8f74d8; --accent2:#b6a3ea;
+  --ok:#8f74d8; --shadow:0 6px 18px rgba(90,60,160,.15);
+  --bar:rgba(255,255,255,.5); --barBtn:rgba(90,74,128,.12); --barTxt:#5a4a80; --barHover:rgba(90,74,128,.2);
+}
+*{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-user-select:none}
+html,body{height:100%;overflow:hidden}
+body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:linear-gradient(160deg,var(--bg1),var(--bg2));color:var(--ink)}
+button{font-family:inherit;border:none;cursor:pointer;background:var(--panel);color:var(--ink);
+  border-radius:14px;padding:10px 18px;font-size:15px;box-shadow:var(--shadow);
+  transition:transform .12s, box-shadow .12s, filter .12s}
+button:hover{transform:translateY(-2px) scale(1.03);filter:brightness(1.05)}
+button:active{transform:translateY(0) scale(.97)}
+button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.hidden{display:none!important}
+
+/* ===== 主菜单 ===== */
+#menu h1{font-size:44px;letter-spacing:4px;color:var(--panel);text-shadow:0 3px 12px rgba(0,0,0,.4);margin-bottom:8px}
+#menu .sub{color:rgba(245,236,220,.75);margin-bottom:28px;font-size:14px}
+.menu-card{background:var(--panel);border-radius:22px;box-shadow:var(--shadow);padding:28px 34px;width:min(560px,92vw);text-align:center}
+.menu-card .row{display:flex;gap:12px;justify-content:center;margin-bottom:14px}
+.menu-card .btn-main{flex:1;padding:14px 10px;font-size:17px;font-weight:bold}
+#previewBox{width:100%;height:210px;border-radius:14px;background:var(--panel2);display:flex;align-items:center;justify-content:center;
+  overflow:hidden;margin:12px 0;border:2px dashed rgba(74,59,40,.25)}
+#previewBox img{max-width:100%;max-height:100%;object-fit:contain}
+#previewBox .ph{color:rgba(74,59,40,.45);font-size:14px}
+.diff-group{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
+.diff-btn{flex:1;min-width:86px;padding:12px 6px;border-radius:14px;font-size:13px;text-align:center;background:var(--panel2)}
+.diff-btn .n{display:block;font-size:20px;font-weight:bold}
+.diff-btn.on{background:var(--accent);color:#fff;transform:translateY(-3px);box-shadow:0 6px 16px rgba(232,115,74,.5)}
+.menu-links{display:flex;gap:12px;justify-content:center;margin-top:6px}
+
+/* ===== 游戏界面 ===== */
+#play{justify-content:flex-start;padding:0}
+#toolbar{width:100%;display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--bar);
+  backdrop-filter:blur(6px);color:var(--barTxt);z-index:5}
+#toolbar button{font-size:13px;padding:7px 12px;border-radius:10px}
+#toolbar .t-btn{background:var(--barBtn);color:var(--barTxt);box-shadow:none}
+#toolbar .t-btn:hover{background:var(--barHover)}
+#progressWrap{flex:1;min-width:120px;max-width:320px;height:14px;border-radius:8px;background:rgba(255,255,255,.15);overflow:hidden;position:relative}
+#progressBar{height:100%;width:0%;border-radius:8px;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .2s}
+#progressText{font-size:12px;margin-left:8px;white-space:nowrap}
+#timer{font-size:15px;font-weight:bold;font-variant-numeric:tabular-nums;background:rgba(0,0,0,.25);padding:5px 12px;border-radius:10px}
+canvas#gameCanvas{position:absolute;inset:0;cursor:grab}
+canvas#gameCanvas.dragging{cursor:grabbing}
+
+/* ===== 完成面板（底部浮卡，不遮挡拼图成果） ===== */
+.overlay{position:absolute;inset:0;background:rgba(20,10,5,.55);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:50}
+#done{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:40;background:none;display:block}
+#done .done-card{background:var(--panel);border-radius:20px;padding:16px 32px;text-align:center;box-shadow:var(--shadow);
+  animation:popIn .4s cubic-bezier(.2,1.6,.4,1)}
+@keyframes popIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+#done .done-card h2{font-size:22px;margin-bottom:5px}
+#done .done-card .meta{color:rgba(74,59,40,.65);margin-bottom:12px;line-height:1.7}
+#done .done-card .row{display:flex;gap:12px;justify-content:center}
+
+/* ===== 陈列室 ===== */
+#gallery{justify-content:flex-start;padding:16px}
+#galleryHead{width:100%;max-width:1100px;display:flex;align-items:center;gap:14px;margin-bottom:14px}
+#galleryHead h2{color:var(--panel);font-size:24px;flex:1}
+#galleryGrid{width:100%;max-width:1100px;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;
+  overflow-y:auto;padding:4px 4px 20px;flex:1;align-content:start}
+.g-card{position:relative;background:var(--panel);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);cursor:pointer;
+  transition:transform .15s}
+.g-card:hover{transform:translateY(-4px) scale(1.02)}
+/* 无翻面完成的拼图：金色边框 + 内发光呼吸 + 金光扫过动画（外发光会形成矩形光圈，用 inset） */
+.g-card.gold{border:3px solid #ffd700;box-shadow:inset 0 0 18px rgba(255,215,0,.28);animation:goldGlow 2s ease-in-out infinite}
+.g-card.gold::after{content:'';position:absolute;top:0;left:-70%;width:45%;height:100%;
+  background:linear-gradient(105deg,transparent,rgba(255,255,255,.55),transparent);animation:goldShine 2.6s ease-in-out infinite}
+@keyframes goldGlow{0%,100%{box-shadow:inset 0 0 10px rgba(255,215,0,.18)}50%{box-shadow:inset 0 0 24px rgba(255,215,0,.5)}}
+@keyframes goldShine{0%{left:-70%}55%,100%{left:135%}}
+.g-card img{width:100%;height:150px;object-fit:cover;display:block;background:var(--panel2)}
+.g-card .info{padding:10px 12px}
+.g-card .info .t{font-weight:bold;font-size:14px;margin-bottom:3px}
+.g-card .info .s{font-size:12px;color:rgba(74,59,40,.6)}
+.g-card .del{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(200,60,40,.85);
+  color:#fff;font-size:14px;line-height:28px;text-align:center;opacity:0;transition:opacity .15s}
+.g-card:hover .del{opacity:1}
+.g-empty{grid-column:1/-1;text-align:center;color:rgba(245,236,220,.7);padding:60px 0;font-size:16px}
+
+/* ===== 回顾视图 ===== */
+#review{flex-direction:column;justify-content:flex-start;padding:14px;gap:10px}
+#reviewBar{width:100%;max-width:1100px;display:flex;align-items:center;gap:12px;color:var(--panel)}
+#reviewBar .spacer{flex:1}
+#reviewStage{flex:1;width:100%;max-width:1100px;display:flex;align-items:center;justify-content:center;
+  background:rgba(40,25,10,.3);border-radius:16px;overflow:hidden}
+#reviewCanvas{max-width:100%;max-height:100%}
+.switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;background:rgba(245,236,220,.16);
+  padding:7px 14px;border-radius:20px;color:var(--panel)}
+.switch input{display:none}
+.switch .dot{width:36px;height:20px;border-radius:10px;background:rgba(255,255,255,.25);position:relative;transition:background .2s}
+.switch .dot::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s}
+.switch input:checked + .dot{background:var(--accent)}
+.switch input:checked + .dot::after{left:18px}
+
+/* ===== 帮助浮层 ===== */
+#help .help-card{background:var(--panel);border-radius:22px;padding:26px 34px;max-width:420px;box-shadow:var(--shadow)}
+#help h3{font-size:20px;margin-bottom:14px}
+#help .k{display:flex;gap:14px;align-items:center;margin-bottom:10px}
+#help .key{min-width:58px;text-align:center;background:var(--panel2);border-radius:8px;padding:5px 8px;font-size:13px;font-weight:bold}
+#help .d{font-size:14px}
+
+/* ===== 网页内确认对话框（替代原生 confirm，手机 WebView 也能弹） ===== */
+#confirm .confirm-card{background:var(--panel);border-radius:18px;padding:24px 26px;max-width:320px;width:84%;
+  box-shadow:var(--shadow);text-align:center;animation:popIn .28s cubic-bezier(.2,1.6,.4,1)}
+#confirm .confirm-card p{font-size:15px;line-height:1.7;margin:0 0 20px;color:var(--ink)}
+#confirm .confirm-card .row{display:flex;gap:10px;justify-content:center}
+#confirm .confirm-card .row button{flex:1;padding:11px 0;border-radius:12px;font-size:15px;font-weight:bold}
+#btnConfirmNo{background:var(--panel2);color:var(--ink)}
+#btnConfirmYes{background:var(--accent);color:#fff}
+
+#toast{position:fixed;top:64px;left:50%;transform:translateX(-50%);background:rgba(40,25,10,.85);color:#fff;
+  padding:9px 20px;border-radius:20px;font-size:14px;z-index:99;opacity:0;transition:opacity .3s;pointer-events:none}
+
+/* ===== 美化面板（主题 + 质感） ===== */
+#skinPanel{position:fixed;top:64px;right:16px;width:248px;background:var(--panel);border-radius:16px;
+  box-shadow:var(--shadow);padding:14px 14px 16px;z-index:60;transform:translateY(-8px);opacity:0;
+  pointer-events:none;transition:transform .22s,opacity .22s}
+#skinPanel.open{transform:translateY(0);opacity:1;pointer-events:auto}
+#skinPanel h3{font-size:13px;margin:10px 2px 8px;color:var(--ink)}
+#skinPanel h3:first-child{margin-top:2px}
+.theme-row{display:flex;gap:9px;flex-wrap:wrap}
+.theme-dot{width:30px;height:30px;border-radius:50%;border:2px solid rgba(0,0,0,.12);cursor:pointer;transition:transform .15s}
+.theme-dot:hover{transform:scale(1.18)}
+.theme-dot.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--ink)}
+.mat-row{display:flex;flex-direction:column;gap:6px}
+.mat-btn{font-size:13px;padding:8px 10px;border-radius:10px;text-align:left;cursor:pointer;background:var(--panel2);color:var(--ink)}
+.mat-btn:hover{filter:brightness(.97)}
+.mat-btn.on{background:var(--accent);color:#fff;font-weight:bold}
+
+/* ===== 响应式（平板/手机） ===== */
+@media (max-width: 900px){
+  #menu h1{font-size:34px}
+  #toolbar{flex-wrap:wrap;gap:6px;padding:6px 10px}
+  #toolbar button{font-size:12px;padding:6px 10px}
+  #progressWrap{min-width:70px;max-width:150px}
+  .menu-card{padding:22px 18px}
+  #previewBox{height:150px}
+  .diff-btn{min-width:72px;padding:10px 4px;font-size:12px}
+  .diff-btn .n{font-size:17px}
+}
+@media (max-width: 520px){
+  .screen{padding:10px;justify-content:flex-start;overflow-y:auto}
+  #menu h1{font-size:26px;letter-spacing:2px;margin-bottom:6px}
+  #menu .sub{font-size:12px;margin-bottom:16px}
+  .menu-card{border-radius:18px;padding:16px 12px}
+  .menu-card .row{flex-direction:column;gap:8px}
+  .menu-card .btn-main{font-size:15px;padding:12px 8px}
+  .menu-links{flex-wrap:wrap;gap:8px}
+  .menu-links button{font-size:13px;padding:9px 12px}
+  #btnStart{padding:10px 18px!important;font-size:15px!important}
+  #btnResume{padding:10px 14px!important;font-size:13px!important}
+  #previewBox{height:110px}
+  .diff-btn{min-width:56px;padding:8px 2px;font-size:11px}
+  .diff-btn .n{font-size:14px}
+  #toolbar button{padding:5px 7px;font-size:11px}
+  #progressText{font-size:10px;margin-left:4px}
+  #timer{font-size:12px;padding:4px 7px}
+  #progressWrap{min-width:50px;max-width:100px;height:11px}
+  #done{left:8px;right:8px;transform:none;bottom:calc(8px + env(safe-area-inset-bottom))}
+  #done .done-card{padding:12px 14px}
+  #done .done-card h2{font-size:18px}
+  #done .row{flex-wrap:wrap}
+  #done .row button{font-size:13px!important;padding:9px 14px!important}
+  #skinPanel{right:8px;left:8px;width:auto;top:52px}
+  .g-card img{height:110px}
+  #galleryGrid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  #galleryHead h2{font-size:19px}
+  #reviewStage{max-height:60vh}
+}
+</style>
+</head>
+<body>
+
+<!-- 主菜单 -->
+<div id="menu" class="screen">
+  <h1>🧩 拼图工坊</h1>
+  <div class="sub">导入图片 · 选择难度 · 享受拼图</div>
+  <div class="menu-card">
+    <div class="row">
+      <button id="btnImport" class="btn-main">📁 导入图片</button>
+      <button id="btnSample" class="btn-main" style="background:var(--accent2)">🖼️ 示例图片</button>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" hidden>
+    <div id="previewBox"><span class="ph">导入图片或使用示例图片预览</span></div>
+    <div class="diff-group" id="diffGroup"></div>
+    <div class="menu-links">
+      <button id="btnStart" disabled style="font-size:17px;padding:13px 34px;font-weight:bold">开始拼图</button>
+      <button id="btnResume" class="hidden" style="font-size:15px;background:var(--ok);color:#fff;padding:13px 26px">▶️ 继续拼图</button>
+      <button id="btnGallery" style="font-size:15px">🏛️ 陈列室</button>
+      <button id="btnSkinMenu" style="font-size:15px">🎨 美化</button>
+    </div>
+  </div>
+</div>
+
+<!-- 游戏界面 -->
+<div id="play" class="screen hidden">
+  <div id="toolbar">
+    <button id="btnBack" class="t-btn">← 返回</button>
+    <div id="progressWrap"><div id="progressBar"></div></div>
+    <div id="progressText">0/0</div>
+    <div id="timer">00:00</div>
+    <button id="btnSkin" class="t-btn" title="皮肤系统开发中">纸质</button>
+    <button id="btnFlip" class="t-btn" title="翻转当前碎片（中键）">↻ 翻面</button>
+    <button id="btnPutBack" class="t-btn" title="放回堆放区（右键）">⬇ 放回</button>
+    <button id="btnSound" class="t-btn">🔊</button>
+    <button id="btnHelp" class="t-btn">?</button>
+  </div>
+  <canvas id="gameCanvas"></canvas>
+</div>
+
+<!-- 完成面板 -->
+<div id="done" class="hidden">
+  <div class="done-card">
+    <h2>🎉 拼图完成！</h2>
+    <div class="meta" id="doneMeta"></div>
+    <div class="row">
+      <button id="btnToGallery" style="background:var(--accent);color:#fff;font-size:16px;padding:12px 26px">🏛️ 进入陈列室</button>
+      <button id="btnAgain" style="font-size:16px;padding:12px 26px">再拼一张</button>
+    </div>
+  </div>
+</div>
+
+<!-- 陈列室 -->
+<div id="gallery" class="screen hidden">
+  <div id="galleryHead">
+    <h2>🏛️ 陈列室</h2>
+    <button id="btnClearGallery" class="t-btn" style="background:rgba(200,60,40,.7);color:#fff">清空</button>
+    <button id="btnBackMenu2" style="background:rgba(245,236,220,.16);color:var(--panel)">← 返回</button>
+  </div>
+  <div id="galleryGrid"></div>
+</div>
+
+<!-- 回顾视图 -->
+<div id="review" class="screen hidden">
+  <div id="reviewBar">
+    <button id="btnReviewBack" style="background:rgba(245,236,220,.16);color:var(--panel)">← 返回陈列室</button>
+    <div id="reviewInfo" style="font-size:14px;color:var(--panel)"></div>
+    <div class="spacer"></div>
+    <label class="switch">分界线 <input type="checkbox" id="chkLines" checked><span class="dot"></span></label>
+  </div>
+  <div id="reviewStage"><canvas id="reviewCanvas"></canvas></div>
+</div>
+
+<!-- 帮助 -->
+<div id="help" class="overlay hidden">
+  <div class="help-card">
+    <h3>🖱️ 操作说明</h3>
+    <div class="k"><span class="key">左键</span><span class="d">抓起碎片，拼盘内松手自动对齐；拼对后粘合锁定</span></div>
+    <div class="k"><span class="key">右键</span><span class="d">放回堆放区（拖拽中或悬停碎片）</span></div>
+    <div class="k"><span class="key">中键</span><span class="d">翻转碎片，看背后的序号</span></div>
+    <div class="k"><span class="key">拼对块</span><span class="d">已拼好的相连块可以整块拿起移动，松手自动归位</span></div>
+    <div style="text-align:center;margin-top:14px"><button id="btnHelpClose">知道了</button></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- 确认对话框（网页内，替代原生 confirm，手机 WebView 也能弹） -->
+<div id="confirm" class="overlay hidden">
+  <div class="confirm-card">
+    <p id="confirmMsg"></p>
+    <div class="row">
+      <button id="btnConfirmNo">取消</button>
+      <button id="btnConfirmYes">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- 美化面板 -->
+<div id="skinPanel">
+  <h3>🎨 背景主题</h3>
+  <div class="theme-row" id="themeRow"></div>
+  <h3>🧩 拼图质感</h3>
+  <div class="mat-row" id="matRow"></div>
+</div>
+
+<script>
+'use strict';
+/* ================= 工具 ================= */
+const $ = s => document.querySelector(s);
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const rand = (a,b) => a + Math.random()*(b-a);
+// 兼容圆角矩形路径（旧浏览器不支持 ctx.roundRect）
+function rr(g, x, y, w, h, r){
+  r = Math.min(r, w/2, h/2);
+  g.beginPath();
+  g.moveTo(x+r, y);
+  g.arcTo(x+w, y, x+w, y+h, r);
+  g.arcTo(x+w, y+h, x, y+h, r);
+  g.arcTo(x, y+h, x, y, r);
+  g.arcTo(x, y, x+w, y, r);
+  g.closePath();
+}
+const fmtTime = ms => { const s = Math.floor(ms/1000); return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); };
+let toastTimer = null;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.style.opacity = 1;
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=> t.style.opacity = 0, 1800); }
+
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+
+/* ================= 存储（IndexedDB 优先，自动降级 localStorage） ================= */
+const Store = {
+  mode: 'idb', db: null,
+  async init(){
+    try{
+      this.db = await new Promise((res,rej)=>{ const rq=indexedDB.open('jigsaw',1);
+        rq.onupgradeneeded=e=>{ const d=e.target.result;
+          if(!d.objectStoreNames.contains('images')) d.createObjectStore('images');
+          if(!d.objectStoreNames.contains('gallery')) d.createObjectStore('gallery',{keyPath:'id'});
+          if(!d.objectStoreNames.contains('active')) d.createObjectStore('active'); };
+        rq.onsuccess=e=>res(e.target.result); rq.onerror=()=>rej(rq.error); });
+      await this.put('_t','_t','1'); // 写测试
+      await this.del('_t','_t');
+      this.mode = 'idb';
+    }catch(e){
+      this.mode = 'ls';
+      console.warn('IndexedDB 不可用，降级 localStorage 存储');
+    }
+  },
+  async put(store, key, val){
+    if(this.mode==='idb'){
+      return new Promise((res,rej)=>{ const tx=this.db.transaction(store,'readwrite');
+        tx.objectStore(store).put(val,key); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); });
+    }
+    // ---- localStorage 降级 ----
+    if(store==='images'){
+      if(val instanceof Blob){
+        const url = await new Promise((res,rej)=>{ const r=new FileReader();
+          r.onload=()=>res(r.result); r.onerror=()=>rej(r.error); r.readAsDataURL(val); });
+        localStorage.setItem('j_'+key, url);
+      } else localStorage.setItem('j_'+key, val);
+    } else if(store==='gallery'){
+      let arr=[]; try{ arr=JSON.parse(localStorage.getItem('j_gallery')||'[]'); }catch(e){}
+      const i=arr.findIndex(x=>x.id===val.id);
+      if(i>=0) arr[i]=val; else arr.push(val);
+      localStorage.setItem('j_gallery', JSON.stringify(arr));
+    } else { // active
+      localStorage.setItem('j_active', JSON.stringify(val));
+    }
+  },
+  async get(store, key){
+    if(this.mode==='idb'){
+      return new Promise((res,rej)=>{ const rq=this.db.transaction(store,'readonly').objectStore(store).get(key);
+        rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error); });
+    }
+    if(store==='images') return localStorage.getItem('j_'+key);
+    if(store==='active'){ try{ return JSON.parse(localStorage.getItem('j_active')); }catch(e){ return null; } }
+    return null;
+  },
+  async all(store){
+    if(this.mode==='idb'){
+      return new Promise((res,rej)=>{ const rq=this.db.transaction(store,'readonly').objectStore(store).getAll();
+        rq.onsuccess=()=>res(rq.result||[]); rq.onerror=()=>rej(rq.error); });
+    }
+    if(store==='gallery'){ try{ return JSON.parse(localStorage.getItem('j_gallery')||'[]'); }catch(e){ return []; } }
+    return [];
+  },
+  async del(store, key){
+    if(this.mode==='idb'){
+      return new Promise((res,rej)=>{ const tx=this.db.transaction(store,'readwrite');
+        tx.objectStore(store).delete(key); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); });
+    }
+    if(store==='images') localStorage.removeItem('j_'+key);
+    else if(store==='active') localStorage.removeItem('j_active');
+    else if(store==='gallery'){
+      let arr=[]; try{ arr=JSON.parse(localStorage.getItem('j_gallery')||'[]'); }catch(e){}
+      localStorage.setItem('j_gallery', JSON.stringify(arr.filter(x=>x.id!==key)));
+    }
+  }
+};
+// 兼容旧函数名（调用点零改动）
+const idbOpen = () => Store.init();
+const idbPut = (s,k,v) => Store.put(s,k,v);
+const idbGet = (s,k) => Store.get(s,k);
+const idbDel = (s,k) => Store.del(s,k);
+const idbAll = (s) => Store.all(s);
+
+/* ================= 音效 ================= */
+// 每材质一套音效参数：[波形, 频率, 延迟, 时长, 音量]
+const MATSFX = {
+  paper:{ grab:[['sine',320,0,.06,.18]], drop:[['sine',170,0,.1,.2]],
+    snap:[['triangle',720,0,.08,.28],['sine',1400,.02,.05,.12]],
+    lock:[['triangle',520,0,.07,.26],['sine',1040,.03,.05,.13]],
+    flip:[['sawtooth',420,0,.07,.08],['sawtooth',640,.03,.05,.06]] },
+  thick:{ grab:[['sine',240,0,.09,.22]], drop:[['sine',110,0,.16,.26]],
+    snap:[['triangle',520,0,.09,.3],['sine',900,.02,.06,.1]],
+    lock:[['triangle',400,0,.09,.28],['sine',760,.03,.07,.12]],
+    flip:[['sawtooth',320,0,.1,.09],['sawtooth',480,.04,.07,.07]] },
+  jelly:{ grab:[['sine',190,0,.13,.28]], drop:[['sine',95,0,.28,.32],['sine',140,.06,.22,.18]],
+    snap:[['sine',240,0,.16,.3],['sine',360,.05,.14,.16]],
+    lock:[['sine',210,0,.2,.34],['sine',320,.04,.18,.22],['sine',480,.09,.14,.13]],
+    flip:[['sine',260,0,.16,.16],['sine',390,.05,.14,.11]] },
+};
+const SFX = (()=>{
+  let ctx = null, enabled = localStorage.getItem('jigsaw_muted') !== '1';
+  function c(){ if(!ctx) ctx = new (window.AudioContext||window.webkitAudioContext)(); if(ctx.state==='suspended') ctx.resume(); return ctx; }
+  function play(spec){
+    if(!enabled) return;
+    try{ const a=c();
+      spec.forEach(([type,freq,start,dur,vol])=>{
+        const o=a.createOscillator(), g=a.createGain();
+        o.type=type; o.frequency.value=freq;
+        g.gain.setValueAtTime(vol, a.currentTime+start);
+        g.gain.exponentialRampToValueAtTime(0.001, a.currentTime+start+dur);
+        o.connect(g).connect(a.destination); o.start(a.currentTime+start); o.stop(a.currentTime+start+dur);
+      });
+    }catch(e){} }
+  function mfx(){ return MATSFX[(MAT&&MAT.sfx)||'paper'] || MATSFX.paper; }
+  return {
+    get on(){return enabled},
+    set on(v){ enabled=v; localStorage.setItem('jigsaw_muted', v?'0':'1'); },
+    click(){ play([['sine',800,0,.05,.1]]); },
+    grab(){ play(mfx().grab); },
+    snap(){ play(mfx().snap); },
+    flip(){ play(mfx().flip); },
+    drop(){ play(mfx().drop); },
+    lock(){ play(mfx().lock); },
+    win(){ play([['sine',523,0,.22,.18],['sine',659,.12,.22,.18],['sine',784,.24,.22,.18],['sine',1047,.36,.3,.18],['triangle',784,.5,.28,.1],['triangle',1047,.66,.28,.1],['triangle',1319,.82,.34,.1]]); },
+  };
+})();
+$('#btnSound').textContent = SFX.on ? '🔊' : '🔇';
+$('#btnSound').onclick = () => { SFX.on = !SFX.on; $('#btnSound').textContent = SFX.on ? '🔊' : '🔇'; };
+
+/* ================= 背景主题（画布配色） ================= */
+const THEMES = {
+  classic:{ name:'经典木桌', bg:'#6b543c', plate:'rgba(240,232,215,.92)', pad:'rgba(0,0,0,.18)' },
+  mint:{    name:'薄荷奶绿', bg:'#c9eddd', plate:'rgba(255,255,255,.94)', pad:'rgba(90,160,130,.16)' },
+  sky:{     name:'晴空蓝',   bg:'#d2eaf9', plate:'rgba(255,255,255,.94)', pad:'rgba(90,150,190,.14)' },
+  peach:{   name:'蜜桃粉',   bg:'#fce5de', plate:'rgba(255,255,255,.94)', pad:'rgba(220,130,110,.15)' },
+  lemon:{   name:'柠檬黄',   bg:'#faedc4', plate:'rgba(255,255,255,.94)', pad:'rgba(190,160,60,.16)' },
+  lavender:{name:'薰衣草紫', bg:'#e4daf7', plate:'rgba(255,255,255,.94)', pad:'rgba(140,110,210,.15)' },
+};
+let themeKey = localStorage.getItem('jigsaw_theme') || 'classic';
+
+/* ================= 材质皮肤（质感参数，加数据即可扩展） ================= */
+const MATERIALS = {
+  paper:{ name:'纸质', thickness:4, thicknessColor:'#b3a185',
+    gloss:.22, glossColor:'rgba(255,255,255,.5)',
+    noise:.05, backColor:'#e9ddc7', backTextColor:'#7a6a52',
+    edgeShadow:'rgba(90,60,30,.3)', edgeLight:'rgba(255,255,255,.25)',
+    alpha:1, jello:false, sfx:'paper' },
+  thick:{ name:'厚纸板', thickness:9, thicknessColor:'#a8926f',
+    gloss:.1, glossColor:'rgba(255,255,255,.35)',
+    noise:.13, backColor:'#e5d6b8', backTextColor:'#6f5f45',
+    edgeShadow:'rgba(80,50,20,.45)', edgeLight:'rgba(255,255,255,.18)',
+    alpha:1, jello:false, sfx:'thick' },
+  jelly:{ name:'果冻', thickness:0, thicknessColor:'rgba(255,130,180,0)',
+    gloss:0, glossColor:'rgba(255,255,255,0)',
+    noise:0, backColor:'#ffe8f0', backTextColor:'#c07090',
+    edgeShadow:'rgba(60,40,30,.2)', edgeLight:'rgba(255,255,255,0)',
+    alpha:1, jello:true, sfx:'jelly' },
+};
+let matKey = localStorage.getItem('jigsaw_mat') || 'paper';
+if(!MATERIALS[matKey]){ matKey = 'paper'; localStorage.setItem('jigsaw_mat','paper'); }
+let MAT = MATERIALS[matKey] || MATERIALS.paper;
+let noiseCanvas = null;
+function getNoise(){ if(noiseCanvas) return noiseCanvas;
+  noiseCanvas = document.createElement('canvas'); noiseCanvas.width = noiseCanvas.height = 128;
+  const g = noiseCanvas.getContext('2d'), img = g.createImageData(128,128);
+  for(let i=0;i<img.data.length;i+=4){ const v=Math.random()*255|0;
+    img.data[i]=img.data[i+1]=img.data[i+2]=v; img.data[i+3]=Math.random()<.5?0:9; }
+  g.putImageData(img,0,0); return noiseCanvas; }
+
+/* ================= 难度 ================= */
+const DIFFS = [
+  { name:'轻松',  n:9,   desc:'3×3' },
+  { name:'入门',  n:16,  desc:'4×4' },
+  { name:'简单',  n:36,  desc:'6×6' },
+  { name:'中等',  n:64,  desc:'8×8' },
+  { name:'困难',  n:100, desc:'10×10' },
+  { name:'大师',  n:144, desc:'12×12' },
+];
+let selDiff = 2;
+function gridFor(imgW, imgH, target){
+  const r = imgW/imgH;
+  let best = null, bestErr = 1e9;
+  for(let cols = Math.max(2, Math.round(Math.sqrt(target*r))-2); cols <= Math.round(Math.sqrt(target*r))+3; cols++){
+    const rows = Math.max(2, Math.round(target/cols));
+    const err = Math.abs(cols*rows - target)/target;
+    if(err < bestErr){ bestErr = err; best = [cols, rows]; }
+  }
+  return best;
+}
+function buildDiffUI(){
+  const g = $('#diffGroup'); g.innerHTML = '';
+  DIFFS.forEach((d,i)=>{
+    const b = document.createElement('button');
+    b.className = 'diff-btn' + (i===selDiff?' on':'');
+    b.innerHTML = `<span class="n">${d.n}</span>${d.name} · ${d.desc}`;
+    b.onclick = () => { selDiff = i; g.querySelectorAll('.diff-btn').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SFX.click(); };
+    g.appendChild(b);
+  });
+}
+
+/* ================= 状态 ================= */
+let Game = null; // 当前拼图实例
+let currentImage = null;  // {canvas, key}
+let currentImageKey = null;
+
+/* ================= 碎片生成 ================= */
+function edgePoints(shape, len, cx){
+  const pts = [];
+  if(shape === 0){ pts.push([0,0],[len,0]); return pts; }
+  const r = len*0.16, x0 = cx-r, x1 = cx+r, n = 32;
+  for(let i=0;i<=n;i++){
+    const x = len*i/n; let y = 0;
+    if(x >= x0 && x <= x1){ const t = Math.PI*(x-x0)/(x1-x0); y = -Math.sin(t)*r*shape; }
+    pts.push([x,y]);
+  }
+  return pts;
+}
+function makePuzzle(imgW, imgH, cols, rows, seed){
+  const rng = mulberry32(seed);
+  const cellW = imgW/cols, cellH = imgH/rows;
+  // 内部边形状缓存：key 'H:gx,gy'（gx与gx+1之间，凸向右/下为正）
+  const edgeCache = {};
+  // 内部边必须凸或凹（不允许平边）——只有图片外缘的边界边才是直边
+  function edgeShape(k){
+    if(!(k in edgeCache)) edgeCache[k] = rng() < .5 ? 1 : -1;
+    return edgeCache[k];
+  }
+  // 注意：圆弧必须居中（len/2），偏移会导致共享边两侧曲线不互补、凹凸咬合不上
+  function pathFor(gx, gy){
+    const x0 = gx*cellW, y0 = gy*cellH;
+    const p = new Path2D();
+    const pts = [];
+    // dir='h' 水平边：px→X 沿边, py→Y 垂直；dir='v' 垂直边：px→Y 沿边, py→X 垂直（交叉映射）
+    // rev=false 正向（上/右），rev=true 反向（下/左）
+    const add = (pts2, tx, ty, dir, rev) => {
+      for(let i=0;i<pts2.length;i++){
+        const px = pts2[i][0], py = pts2[i][1];
+        let X, Y;
+        if(dir==='h'){ X = rev ? tx - px : tx + px; Y = rev ? ty - py : ty + py; }
+        else         { X = rev ? tx + py : tx - py; Y = rev ? ty - px : ty + px; }
+        pts.push([X,Y]);
+        i===0 ? p.moveTo(X,Y) : p.lineTo(X,Y);
+      }
+    };
+    // 上边（正向 h，凹：取反，缺口朝上容纳上方格的下凸）
+    if(gy===0){ add([[0,0],[cellW,0]], x0, y0, 'h', false); }
+    else{ const k='V:'+gx+','+(gy-1); add(edgePoints(-edgeShape(k), cellW, cellW/2), x0, y0, 'h', false); }
+    // 右边（正向 v，凸向右，原值）——直边须用 [cellH,0]（px沿边、py=0），[0,cellH] 会被映射成水平线
+    if(gx===cols-1){ add([[0,0],[cellH,0]], x0+cellW, y0, 'v', false); }
+    else{ const k='H:'+gx+','+gy; add(edgePoints(edgeShape(k), cellH, cellH/2), x0+cellW, y0, 'v', false); }
+    // 下边（反向 h，凸向下，原值）
+    if(gy===rows-1){ add([[0,0],[cellW,0]], x0+cellW, y0+cellH, 'h', true); }
+    else{ const k='V:'+gx+','+gy; add(edgePoints(edgeShape(k), cellW, cellW/2), x0+cellW, y0+cellH, 'h', true); }
+    // 左边（反向 v，凹：取反，缺口朝左容纳左方格右凸）——直边须用 [cellH,0]
+    if(gx===0){ add([[0,0],[cellH,0]], x0, y0+cellH, 'v', true); }
+    else{ const k='H:'+(gx-1)+','+gy; add(edgePoints(-edgeShape(k), cellH, cellH/2), x0, y0+cellH, 'v', true); }
+    p.closePath();
+    // 包围盒（世界坐标）
+    let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9;
+    pts.forEach(q=>{ if(q[0]<minX)minX=q[0]; if(q[1]<minY)minY=q[1]; if(q[0]>maxX)maxX=q[0]; if(q[1]>maxY)maxY=q[1]; });
+    return { path:p, pts, bb:[minX,minY,maxX,maxY] };
+  }
+  const pieces = [];
+  for(let gy=0; gy<rows; gy++) for(let gx=0; gx<cols; gx++){
+    const pf = pathFor(gx, gy);
+    pieces.push({ id:pieces.length, gx, gy, path:pf.path, pts:pf.pts, bb:pf.bb, locked:false,
+      x:0, y:0, flipT:-1, flipped:false, jelloT:-1, _jlast:0 });
+  }
+  return { cellW, cellH, pieces, edgeCache, imgW, imgH };
+}
+
+/* ================= 渲染（预渲染碎片位图） ================= */
+// 手动变换路径（绕开 Path2D+非单位变换失效的兼容问题）：点坐标 = 世界坐标*s + (tx,ty)
+function tracePath(g, pts, tx, ty, s){
+  g.beginPath();
+  for(let i=0;i<pts.length;i++){
+    const X = pts[i][0]*s + tx, Y = pts[i][1]*s + ty;
+    i===0 ? g.moveTo(X,Y) : g.lineTo(X,Y);
+  }
+  g.closePath();
+}
+function renderPieceBitmaps(p, imgCanvas, scale){
+  const cellW = p.cellW, cellH = p.cellH, th = MAT.thickness;
+  // 余量必须容纳凸出半径（格子尺寸的 16%）+ 描边，否则凸出部分被画布边界截断
+  const rMax = Math.max(cellW*0.16, cellH*0.16, th);
+  const padW = rMax + 4;
+  const wPx = Math.ceil((cellW + padW*2)*scale), hPx = Math.ceil((cellH + padW*2)*scale);
+  const tx = padW*scale, ty = padW*scale; // 世界原点在画布中的像素位置
+  const iw = imgCanvas.width, ih = imgCanvas.height;
+  p.pieces.forEach(pc => {
+    const pts = pc.pts, bb = pc.bb;
+    // 画布坐标 = (世界坐标 - 格原点)*scale + tx —— 每片独立偏移
+    const ox = tx - pc.gx*cellW*scale, oy = ty - pc.gy*cellH*scale;
+    // 图片源区域（包围盒 ∩ 图片，世界坐标）
+    const sx = Math.max(0, bb[0]), sy = Math.max(0, bb[1]);
+    const sw = Math.min(iw, bb[2]) - sx, sh = Math.min(ih, bb[3]) - sy;
+    // ---- 正面 ----
+    const cv = document.createElement('canvas'); cv.width = wPx; cv.height = hPx;
+    const g = cv.getContext('2d');
+    // 厚度层（右下偏移，手动变换）
+    tracePath(g, pts, ox + th*scale, oy + th*scale, scale);
+    g.fillStyle = MAT.thicknessColor; g.fill();
+    // 图片内容（玻璃/亚克力/果冻半透明）
+    if(MAT.alpha < 1) g.globalAlpha = MAT.alpha;
+    if(sw>0 && sh>0) g.drawImage(imgCanvas, sx, sy, sw, sh, ox + sx*scale, oy + sy*scale, sw*scale, sh*scale);
+    g.globalAlpha = 1;
+    // ===== 光照（双层，解决拼合后接缝明暗对跳） =====
+    // 1) 全局方向光照：整个拼图统一从左上到右下受光（世界坐标连续），跨碎片衔接平滑
+    const gW = p.imgW, gH = p.imgH;
+    const gg = g.createLinearGradient(
+      (0 - pc.gx*cellW)*scale + tx, (0 - pc.gy*cellH)*scale + ty,
+      (gW*.85 - pc.gx*cellW)*scale + tx, (gH*.85 - pc.gy*cellH)*scale + ty);
+    gg.addColorStop(0, 'rgba(255,255,255,.16)'); gg.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gg; g.fillRect(0, 0, wPx, hPx);
+    // 2) 局部中心光晕：每片中心亮、边缘暗（保留单片立体感；接缝处两片同为暗边→平滑）
+    const cxp = tx + cellW*scale/2, cyp = ty + cellH*scale/2;
+    const rg = g.createRadialGradient(cxp, cyp, 0, cxp, cyp, Math.max(cellW, cellH)*scale*.75);
+    rg.addColorStop(0, MAT.glossColor); rg.addColorStop(1, 'rgba(255,255,255,0)');
+    g.globalAlpha = MAT.gloss; g.fillStyle = rg; g.fillRect(0, 0, wPx, hPx); g.globalAlpha = 1;
+    // 噪点（铺满画布，凸出部分同样覆盖）
+    if(MAT.noise>0){ g.globalAlpha = MAT.noise; g.fillStyle = g.createPattern(getNoise(),'repeat'); g.fillRect(0, 0, wPx, hPx); g.globalAlpha = 1; }
+    // 蒙版裁剪（destination-in，不用 clip）
+    g.globalCompositeOperation = 'destination-in';
+    tracePath(g, pts, ox, oy, scale);
+    g.fillStyle = '#fff'; g.fill();
+    g.globalCompositeOperation = 'source-over';
+    // 描边
+    tracePath(g, pts, ox, oy, scale);
+    g.strokeStyle = MAT.edgeShadow; g.lineWidth = 3; g.stroke();
+    g.strokeStyle = MAT.edgeLight; g.lineWidth = 1; g.stroke();
+    pc.front = cv;
+    // ---- 背面 ----
+    const bc = document.createElement('canvas'); bc.width = wPx; bc.height = hPx;
+    const bg = bc.getContext('2d');
+    bg.fillStyle = MAT.backColor; bg.fillRect(0,0,wPx,hPx);
+    if(MAT.noise>0){ bg.globalAlpha = MAT.noise; bg.fillStyle = bg.createPattern(getNoise(),'repeat'); bg.fillRect(0,0,wPx,hPx); bg.globalAlpha = 1; }
+    bg.globalCompositeOperation = 'destination-in';
+    tracePath(bg, pts, ox, oy, scale);
+    bg.fillStyle = '#fff'; bg.fill();
+    bg.globalCompositeOperation = 'source-over';
+    tracePath(bg, pts, ox, oy, scale);
+    bg.strokeStyle = MAT.edgeShadow; bg.lineWidth = 2; bg.stroke();
+    // 序号
+    const fs = Math.max(12, cellW*.3)*scale, ss = Math.max(9, cellW*.12)*scale;
+    bg.fillStyle = MAT.backTextColor; bg.textAlign='center'; bg.textBaseline='middle';
+    bg.font = `bold ${fs}px sans-serif`;
+    bg.fillText(String(pc.id+1), tx + cellW*scale/2, ty + cellH*scale/2 - fs*.35);
+    bg.font = `${ss}px sans-serif`;
+    bg.fillText(`第${pc.gy+1}行 · 第${pc.gx+1}列`, tx + cellW*scale/2, ty + cellH*scale/2 + fs*.4);
+    pc.back = bc;
+    pc.padPx = Math.ceil(tx); pc.wPx = bc.width; pc.hPx = bc.height;
+  });
+}
+
+// 点在多边形内判定（射线法，绕开 Path2D 变换兼容问题）
+function pointInPoly(pts, x, y){
+  let inside = false;
+  for(let i=0, j=pts.length-1; i<pts.length; j=i++){
+    const xi = pts[i][0], yi = pts[i][1], xj = pts[j][0], yj = pts[j][1];
+    if(((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) inside = !inside;
+  }
+  return inside;
+}
+/* ================= 主游戏 ================= */
+class PuzzleGame {
+  constructor(imgCanvas, cols, rows, seed, diffName, lockedList, elapsed){
+    this.img = imgCanvas; this.imgW = imgCanvas.width; this.imgH = imgCanvas.height;
+    this.cols = cols; this.rows = rows; this.seed = seed; this.diffName = diffName;
+    const d = makePuzzle(this.imgW, this.imgH, cols, rows, seed);
+    this.cellW = d.cellW; this.cellH = d.cellH; this.pieces = d.pieces; this.edgeCache = d.edgeCache;
+    this.total = this.pieces.length; this.lockedCount = 0; this.anyFlipped = false;
+    this.drag = null; this.completed = false; this.completeAt = 0;
+    this.startTime = performance.now() - (elapsed || 0);
+    this.parent = this.pieces.map((_,i)=>i);
+    this.offsets = this.pieces.map(()=>({dx:0, dy:0}));
+    this.sel = null; // 当前抓起的碎片或组
+    // 预渲染
+    this.layout();
+    renderPieceBitmaps(this, imgCanvas, this.viewScale);
+    // 散放
+    this.scatter(lockedList || []);
+  }
+  layout(){
+    const cvs = $('#gameCanvas'), W = cvs.width = window.innerWidth, H = cvs.height = window.innerHeight;
+    // 工具栏实际高度（手机换行后更高，必须预留，否则拼盘底部被截）
+    const tb = document.getElementById('toolbar');
+    const tbH = tb ? tb.offsetHeight : 26;
+    const portrait = W < H;
+    // 竖屏：左右堆放带收窄（碎片主要堆上下），横屏：左右为主
+    const mw = portrait
+      ? Math.max(W*0.045, W*0.5/(this.cols+1.2))
+      : Math.max(W*0.08, 1.15*W/(this.cols+2.3));
+    const mh = portrait
+      ? Math.max(H*0.07, 1.05*H/(this.rows+2.2))
+      : Math.max(H*0.08, 1.15*H/(this.rows+2.3));
+    this.scale = Math.min((W-2*mw)/this.imgW, (H - 2*mh - tbH)/this.imgH);
+    this.offX = (W - this.imgW*this.scale)/2;
+    this.offY = (H - this.imgH*this.scale)/2 + tbH;
+    this.padW = mw/this.scale; this.padH = mh/this.scale; // 世界单位堆放带
+    this.viewScale = this.scale;
+  }
+  scatter(lockedList){
+    const lockedSet = new Set((lockedList||[]).map(l=>l[0]+','+l[1]));
+    const padW = this.padW, padH = this.padH, iw = this.imgW, ih = this.imgH;
+    const cw = this.cellW, ch = this.cellH;
+    this.pieces.forEach(pc=>{
+      if(lockedSet.has(pc.gx+','+pc.gy)){ pc.locked = true; pc.x = pc.gx*this.cellW+this.cellW/2; pc.y = pc.gy*this.cellH+this.cellH/2; this.lockedCount++; }
+    });
+    // 连通合并
+    this.pieces.forEach(pc=>{ if(!pc.locked) return;
+      [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{
+        const nb = this.pieces.find(q=>q.gx===pc.gx+dx && q.gy===pc.gy+dy && q.locked);
+        if(nb) this.union(pc.id, nb.id);
+      });
+    });
+    // 恢复组偏移（存档 [gx,gy,dx,dy]，须在 union 之后）
+    (lockedList||[]).forEach(l=>{
+      if(!l || l.length < 4) return;
+      const pc = this.pieces.find(q=>q.gx===l[0] && q.gy===l[1]);
+      if(pc && pc.locked){ const o = this.offsets[this.find(pc.id)]; o.dx = l[2]; o.dy = l[3]; }
+    });
+    const placed = [];
+    this.pieces.forEach(pc=>{
+      if(pc.locked){ pc.x = pc.gx*this.cellW + this.cellW/2; pc.y = pc.gy*this.cellH + this.cellH/2; return; }
+      // 随机散放到四周堆放区（含四角），避开图片区域
+      for(let t=0; t<60; t++){
+        const x = rand(-padW, iw+padW), y = rand(-padH, ih+padH);
+        if(x > -cw*.5 && x < iw+cw*.5 && y > -ch*.5 && y < ih+ch*.5) continue; // 落在拼盘范围 → 重试
+        let ok = true;
+        for(const q of placed){ const dx=q.x-x, dy=q.y-y; if(dx*dx+dy*dy < (cw*.7)*(cw*.7)){ ok=false; break; } }
+        if(ok){ pc.x=x; pc.y=y; placed.push(pc); break; }
+        if(t===59){ pc.x=x; pc.y=y; placed.push(pc); }
+      }
+    });
+    this.updateProgress();
+  }
+  find(a){ while(this.parent[a]!==a){ this.parent[a]=this.parent[this.parent[a]]; a=this.parent[a]; } return a; }
+  union(a,b){ const ra=this.find(a), rb=this.find(b); if(ra!==rb) this.parent[rb]=ra; }
+  groupOffset(id){ return this.offsets[this.find(id)]; }
+  // 相对粘合判定：pc 与已锁定碎片 q 拼图相邻（共享边配对）且当前位置贴边。
+  // 位置错误/骑线也能粘——只要求相对关系正确。返回 {q,dgx,dgy} 或 null。
+  tryGluePiece(pc, T){
+    const offPc = pc.locked ? this.groupOffset(pc.id) : null;
+    const px = offPc ? pc.x + offPc.dx : pc.x, py = offPc ? pc.y + offPc.dy : pc.y;
+    let best = null, bestD = T;
+    this.pieces.forEach(q => {
+      if(q.id === pc.id || !q.locked || this.find(q.id) === this.find(pc.id)) return;
+      const dgx = pc.gx - q.gx, dgy = pc.gy - q.gy;
+      if(Math.abs(dgx) + Math.abs(dgy) !== 1) return;
+      const oq = this.groupOffset(q.id);
+      const ex = (q.x + oq.dx + dgx*this.cellW) - px;
+      const ey = (q.y + oq.dy + dgy*this.cellH) - py;
+      const d = Math.max(Math.abs(ex), Math.abs(ey));
+      if(d < bestD){ bestD = d; best = {q, dgx, dgy}; }
+    });
+    return best;
+  }
+  // 格子内相对粘合：pc 已吸附在格 (gx,gy)，检查四邻格被占据的碎片（锁定组或未锁定吸附碎片），
+  // 若拼图相对方向与当前格子相对方向一致 → 粘合。碎片不必在正确格，只要相对关系正确。
+  tryGlueCell(pc, gx, gy){
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx = (gx+dx)*this.cellW + this.cellW/2, ny = (gy+dy)*this.cellH + this.cellH/2;
+      const occ = this.pieces.find(q => {
+        if(q.id === pc.id) return false;
+        const ox = q.locked ? q.x + this.groupOffset(q.id).dx : q.x;
+        const oy = q.locked ? q.y + this.groupOffset(q.id).dy : q.y;
+        return Math.abs(ox-nx) < this.cellW*0.2 && Math.abs(oy-ny) < this.cellH*0.2;
+      });
+      if(!occ) continue;
+      // 相对关系正确：拼图里 occ 相对 pc 的方向 = 当前格子方向
+      if(occ.gx-pc.gx !== dx || occ.gy-pc.gy !== dy) continue;
+      const offDx = (gx-pc.gx)*this.cellW, offDy = (gy-pc.gy)*this.cellH;
+      pc.x = pc.gx*this.cellW + this.cellW/2; pc.y = pc.gy*this.cellH + this.cellH/2;
+      pc.locked = true; this.lockedCount++;
+      if(!occ.locked){
+        occ.x = occ.gx*this.cellW + this.cellW/2; occ.y = occ.gy*this.cellH + this.cellH/2;
+        occ.locked = true; this.lockedCount++;
+      }
+      this.union(occ.id, pc.id); // pc 并入 occ 组（用 occ 组偏移；occ 未锁定则 occ 为新 root）
+      // 关键：union 后 root 的偏移统一设为吸附格偏移。
+      // 若 occ 已锁定（错位组），旧代码漏设偏移 → root 用默认 {0,0} → 整组跳回正确位置
+      const root = this.find(pc.id);
+      this.offsets[root] = {dx:offDx, dy:offDy};
+      SFX.lock(); this.updateProgress(); this.checkComplete();
+      return true;
+    }
+    return false;
+  }
+  pieceScreenXY(pc){
+    const off = pc.locked ? this.groupOffset(pc.id) : {dx:0,dy:0};
+    return { x: this.offX + (pc.x+off.dx)*this.scale, y: this.offY + (pc.y+off.dy)*this.scale };
+  }
+  updateProgress(){
+    $('#progressText').textContent = this.lockedCount + '/' + this.total;
+    $('#progressBar').style.width = (this.lockedCount/this.total*100) + '%';
+  }
+  hitTest(sx, sy){
+    const wx = (sx-this.offX)/this.scale, wy = (sy-this.offY)/this.scale;
+    // 逆序：后画的在上（射线法多边形判定，无需 canvas 变换）
+    for(let i=this.pieces.length-1; i>=0; i--){
+      const pc = this.pieces[i];
+      if(pc.locked){ // 锁定：位置 = 格中心 + 组偏移
+        const off = this.groupOffset(pc.id);
+        if(pointInPoly(pc.pts, wx - off.dx, wy - off.dy)) return pc;
+      } else { // 未锁定：路径平移到碎片当前位置
+        const dx = pc.x - (pc.gx*this.cellW + this.cellW/2);
+        const dy = pc.y - (pc.gy*this.cellH + this.cellH/2);
+        if(pointInPoly(pc.pts, wx - dx, wy - dy)) return pc;
+      }
+    }
+    return null;
+  }
+  grab(pc, sx, sy){
+    const wx = (sx-this.offX)/this.scale, wy = (sy-this.offY)/this.scale;
+    if(pc.locked){
+      const root = this.find(pc.id), off = this.offsets[root];
+      const pcs = this.pieces.filter(q=>this.find(q.id)===root);
+      // 基准统一用组内第一片（与 moveTo 一致），否则点击非首片时抓取点错位、移动时整体跳变
+      this.sel = { type:'group', root, pieces:pcs, grabDx:wx-(off.dx+pcs[0].x), grabDy:wy-(off.dy+pcs[0].y) };
+    } else {
+      this.sel = { type:'piece', pc, grabDx:wx-pc.x, grabDy:wy-pc.y };
+      pc.flipT = -1; pc.flipped = false;
+    }
+    SFX.grab();
+  }
+  moveTo(sx, sy){
+    if(!this.sel) return;
+    const wx = (sx-this.offX)/this.scale, wy = (sy-this.offY)/this.scale;
+    if(this.sel.type==='piece'){ this.sel.pc.x = wx - this.sel.grabDx; this.sel.pc.y = wy - this.sel.grabDy; }
+    else {
+      const dx = wx - this.sel.grabDx - this.sel.pieces[0].x;
+      const dy = wy - this.sel.grabDy - this.sel.pieces[0].y;
+      this.offsets[this.sel.root].dx = dx; this.offsets[this.sel.root].dy = dy;
+    }
+  }
+  release(){
+    if(!this.sel) return;
+    if(this.sel.type==='piece'){
+      const pc = this.sel.pc;
+      const inPlate = pc.x > 0 && pc.x < this.imgW && pc.y > 0 && pc.y < this.imgH;
+      // 1) 落在自己的正确格子 → 锁定（首片/归位）
+      let done = false;
+      if(inPlate){
+        const gx = clamp(Math.round((pc.x - this.cellW/2)/this.cellW), 0, this.cols-1);
+        const gy = clamp(Math.round((pc.y - this.cellH/2)/this.cellH), 0, this.rows-1);
+        const cx = gx*this.cellW + this.cellW/2, cy = gy*this.cellH + this.cellH/2;
+        const target = this.pieces.find(q=>q.gx===gx && q.gy===gy);
+        if(target.id === pc.id && !pc.locked && Math.hypot(pc.x-cx, pc.y-cy) < this.cellW*0.5){
+          pc.x = cx; pc.y = cy; pc.locked = true; this.lockedCount++; SFX.lock();
+          [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{
+            const nb = this.pieces.find(q=>q.gx===pc.gx+dx && q.gy===pc.gy+dy && q.locked && q.id!==pc.id);
+            if(nb) this.union(pc.id, nb.id);
+          });
+          this.updateProgress(); this.checkComplete(); done = true;
+        }
+      }
+      // 2) 相对粘合：位置错误没关系，只要贴着已锁定碎片且边型配对
+      if(!done){
+        const g = this.tryGluePiece(pc, this.cellW*0.5);
+        if(g){
+          pc.x = pc.gx*this.cellW + this.cellW/2;
+          pc.y = pc.gy*this.cellH + this.cellH/2;
+          pc.locked = true; this.lockedCount++;
+          this.union(g.q.id, pc.id); // pc 并入 q 的组（用 q 组偏移），方向反了会清零偏移导致整组跳回
+          SFX.lock(); this.updateProgress(); this.checkComplete();
+        } else if(inPlate){
+          // 3) 拼盘内无粘合：吸附到最近格子 → 尝试格子内相对粘合（格子对齐的两块也能粘）
+          const gx = clamp(Math.round((pc.x - this.cellW/2)/this.cellW), 0, this.cols-1);
+          const gy = clamp(Math.round((pc.y - this.cellH/2)/this.cellH), 0, this.rows-1);
+          const cx = gx*this.cellW + this.cellW/2, cy = gy*this.cellH + this.cellH/2;
+          if(Math.hypot(pc.x-cx, pc.y-cy) < this.cellW*0.5){
+            pc.x = cx; pc.y = cy;
+            if(!this.tryGlueCell(pc, gx, gy)) SFX.snap();
+          } else SFX.drop();
+        } else SFX.drop();
+      }
+      if(MAT.jello && pc.locked){ pc.jelloT = 0; pc._jlast = 0; } // 果冻材质：放下弹性
+      pc.flipT = -1; pc.flipped = false;
+    } else {
+      // 组：先尝试组-组相对粘合（偏移接近 = 贴边）
+      const root = this.sel.root, off = this.offsets[root];
+      let glued = false;
+      for(const pb of this.sel.pieces){
+        const g = this.tryGluePiece(pb, this.cellW*0.5);
+        if(g){
+          const oa = this.groupOffset(g.q.id);
+          off.dx = oa.dx; off.dy = oa.dy; // 组偏移统一（跳变 < 阈值）
+          this.union(root, g.q.id);
+          SFX.lock(); this.updateProgress(); this.checkComplete(); glued = true;
+          break;
+        }
+      }
+      if(glued && MAT.jello) this.sel.pieces.forEach(q=>{ q.jelloT = 0; q._jlast = 0; });
+      if(!glued){
+        if(Math.hypot(off.dx, off.dy) < this.cellW*0.5){ off.dx = 0; off.dy = 0; SFX.snap(); }
+        else SFX.drop();
+        this.checkComplete();
+      }
+    }
+    this.sel = null;
+    this.saveActiveSoon();
+  }
+  putBack(pc){
+    // 放回堆放区：碎片回原位附近散放；组归位
+    if(pc.locked){ this.offsets[this.find(pc.id)].dx = 0; this.offsets[this.find(pc.id)].dy = 0; SFX.snap(); }
+    else {
+      if(pc.x > 0 && pc.x < this.imgW && pc.y > 0 && pc.y < this.imgH){
+        // 从拼盘错误位置拿起的碎片 → 散放到堆放区
+        for(let t=0; t<40; t++){
+          const x = rand(-this.padW, this.imgW+this.padW), y = rand(-this.padH, this.imgH+this.padH);
+          if(x > -this.cellW*.5 && x < this.imgW+this.cellW*.5 && y > -this.cellH*.5 && y < this.imgH+this.cellH*.5) continue;
+          pc.x = x; pc.y = y; break;
+        }
+      }
+      pc.flipT=-1; pc.flipped=false; SFX.drop();
+    }
+    this.sel = null;
+    this.saveActiveSoon();
+  }
+  flip(pc){
+    if(!pc) return;
+    const target = pc.locked ? this.pieces.filter(q=>this.find(q.id)===this.find(pc.id)) : [pc];
+    target.forEach(q=>{ q.flipped = !q.flipped; q.flipT = 0; q._lastT = null; }); // _lastT 必须重置，否则首帧 delta 巨大、动画被直接跳过
+    this.anyFlipped = true; // 记录翻过面 → 陈列室无金色边框
+    SFX.flip();
+  }
+  checkComplete(){
+    if(this.completed) return;
+    const anyOffset = this.pieces.some(pc=>{ const o=this.offsets[this.find(pc.id)]; return Math.abs(o.dx)>0.5 || Math.abs(o.dy)>0.5; });
+    if(this.lockedCount === this.total && !anyOffset){
+      this.completed = true; this.completeAt = performance.now();
+      this.finish();
+    }
+  }
+  finish(){
+    const elapsed = Math.round(performance.now() - this.startTime);
+    SFX.win();
+    this.completed = true;
+    // 先删进行中存档，再存陈列室（有序，防刷新后仍提示续拼）
+    this.saveOnComplete(elapsed);
+    $('#doneMeta').innerHTML = `难度：${this.diffName}（${this.total}片）<br>用时：${fmtTime(elapsed)}`;
+    $('#done').classList.remove('hidden');
+  }
+  async saveOnComplete(elapsed){
+    try{
+      await idbDel('active','cur');
+      await this.saveToGallery(elapsed);
+    }catch(e){ console.error('完成存档失败:', e); toast('陈列室存档失败：存储空间不足，请清理旧记录'); }
+  }
+  async saveToGallery(elapsed){
+    const id = 'g'+Date.now();
+    await idbPut('gallery', id, { id, imageKey: currentImageKey, cols:this.cols, rows:this.rows,
+      seed:this.seed, diffName:this.diffName, timeMs:elapsed, finishedAt:new Date().toLocaleString('zh-CN'),
+      clean: !this.anyFlipped });
+  }
+  async saveActive(){
+    // 锁定碎片存 [gx, gy, 组偏移dx, 组偏移dy]——错位组续拼后保持原位
+    const locked = this.pieces.filter(p=>p.locked).map(p=>{
+      const o = this.offsets[this.find(p.id)];
+      return [p.gx, p.gy, Math.round(o.dx*100)/100, Math.round(o.dy*100)/100];
+    });
+    await idbPut('active', 'cur', { imageKey: currentImageKey, cols:this.cols, rows:this.rows, seed:this.seed,
+      diffName:this.diffName, locked, elapsed: Math.round(performance.now()-this.startTime) });
+  }
+  saveActiveSoon(){ clearTimeout(this._saT); this._saT = setTimeout(()=>this.saveActive(), 800); }
+  render(now){
+    const cvs = $('#gameCanvas'), ctx = cvs.getContext('2d');
+    const W = cvs.width, H = cvs.height;
+    try{
+    // 背景（主题色）
+    const thm = THEMES[themeKey] || THEMES.classic;
+    ctx.fillStyle = thm.bg; ctx.fillRect(0,0,W,H);
+    // 堆放区底纹（四周浅色区域）
+    const bx = this.offX, by = this.offY, bw = this.imgW*this.scale, bh = this.imgH*this.scale;
+    ctx.fillStyle = thm.pad;
+    ctx.fillRect(0,0,W,by); ctx.fillRect(0,by+bh,W,H-(by+bh));
+    ctx.fillRect(0,by,bx,bh); ctx.fillRect(bx+bw,by,W-(bx+bw),bh);
+    // 拼盘底
+    ctx.fillStyle = thm.plate; rr(ctx, bx, by, bw, bh, 12); ctx.fill();
+    // 网格虚线
+    ctx.strokeStyle = 'rgba(120,100,75,.28)'; ctx.lineWidth = 1; ctx.setLineDash([6,6]);
+    ctx.beginPath();
+    for(let i=1;i<this.cols;i++){ const x=bx+bw*i/this.cols; ctx.moveTo(x,by+8); ctx.lineTo(x,by+bh-8); }
+    for(let j=1;j<this.rows;j++){ const y=by+bh*j/this.rows; ctx.moveTo(bx+8,y); ctx.lineTo(bx+bw-8,y); }
+    ctx.stroke(); ctx.setLineDash([]);
+    // 碎片
+    const order = this.pieces.slice();
+    if(this.sel && this.sel.type==='group'){ const s = new Set(this.sel.pieces.map(q=>q.id)); order.sort((a,b)=> (s.has(a.id)?1:0)-(s.has(b.id)?1:0)); }
+    if(this.sel && this.sel.type==='piece') order.sort((a,b)=> (a.id===this.sel.pc.id?1:0)-(b.id===this.sel.pc.id?1:0));
+    for(const pc of order) this.drawPiece(ctx, pc, now);
+    // 完成特效
+    if(this.completed) this.drawEffects(ctx, now);
+    }catch(e){ console.error('render error:', e); }
+  }
+  drawPiece(ctx, pc, now){
+    const {x, y} = this.pieceScreenXY(pc);
+    let scaleX = 1, jx = 1, jy = 1;
+    if(pc.flipT >= 0){
+      pc.flipT += (now - (pc._lastT || now))/1000 * 7;
+      if(pc.flipT >= 1){ pc.flipT = -1; }
+      else {
+        const t = pc.flipT;
+        scaleX = t < .5 ? Math.cos(Math.PI*t) : -Math.cos(Math.PI*t);
+      }
+      pc._lastT = now;
+    }
+    // 果冻弹性（放下时 duang 变形，衰减振荡）
+    if(MAT.jello && pc.jelloT >= 0){
+      pc.jelloT += (now - (pc._jlast || now))/1000;
+      pc._jlast = now;
+      if(pc.jelloT > .8){ pc.jelloT = -1; }
+      else {
+        const e = Math.exp(-pc.jelloT*6) * Math.sin(pc.jelloT*16) * .18;
+        jx = 1 - e; jy = 1 + e;
+      }
+    }
+    const midFlip = pc.flipT >= 0 && pc.flipT < .5;
+    const img = midFlip ? (pc.flipped ? pc.front : pc.back) : (pc.flipped ? pc.back : pc.front);
+    const dx = x - pc.wPx/2, dy = y - pc.hPx/2;
+    ctx.save();
+    if(scaleX !== 1 || jx !== 1 || jy !== 1){
+      ctx.translate(x, y); ctx.scale(scaleX*jx, jy); ctx.translate(-x, -y);
+    }
+    if(this.sel && ((this.sel.type==='piece' && this.sel.pc===pc) || (this.sel.type==='group' && this.sel.pieces.includes(pc)))){
+      ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 14; ctx.shadowOffsetY = 6;
+      const lift = 1.06;
+      ctx.drawImage(img, dx - img.width*(lift-1)/2, dy - img.height*(lift-1)/2, img.width*lift, img.height*lift);
+    } else {
+      ctx.drawImage(img, dx, dy);
+    }
+    ctx.restore();
+  }
+  drawEffects(ctx, now){
+    const t = (now - this.completeAt)/1000;
+    const cx = this.offX + this.imgW*this.scale/2, cy = this.offY + this.imgH*this.scale/2;
+    // 波纹
+    for(let i=0;i<3;i++){
+      const tt = t - i*.25; if(tt<0 || tt>1.1) continue;
+      const r = tt*Math.max(this.imgW,this.imgH)*this.scale*.55, a = (1-tt)*.5;
+      ctx.strokeStyle = `rgba(255,255,255,${a})`; ctx.lineWidth = 3+tt*5;
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.stroke();
+    }
+    // 烟花粒子
+    if(!this._fx){ this._fx = []; for(let w=0;w<4;w++){ this._fx.push({x:cx, y:cy, t0:t + w*.35, hue:Math.floor(Math.random()*360)}); } }
+    this._fx.forEach(f=>{
+      const dt = t - f.t0; if(dt<0 || dt>2) return;
+      const n = 60;
+      for(let i=0;i<n;i++){
+        const ang = Math.PI*2*i/n + f.hue*.01, sp = 60+Math.random()*90;
+        const px = f.x + Math.cos(ang)*sp*dt*1.6;
+        const py = f.y + Math.sin(ang)*sp*dt*1.6 + 150*dt*dt;
+        const a = Math.max(0, 1-dt/1.6);
+        ctx.fillStyle = `hsla(${f.hue+Math.random()*40},90%,65%,${a})`;
+        ctx.beginPath(); ctx.arc(px, py, 3.2*a, 0, 7); ctx.fill();
+      }
+    });
+  }
+}
+
+/* ================= 视图切换 ================= */
+function show(id){ ['menu','play','gallery','review'].forEach(s=>$('#'+s).classList.add('hidden')); $('#'+id).classList.remove('hidden'); }
+function toastMsg(m){ toast(m); }
+
+/* ================= 图片导入 ================= */
+function loadImageFromFile(file){
+  const rd = new FileReader();
+  rd.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      // 规范化：长边 ≤1600
+      let w = img.width, h = img.height;
+      const maxL = 1600;
+      if(Math.max(w,h) > maxL){ const k = maxL/Math.max(w,h); w = Math.round(w*k); h = Math.round(h*k); }
+      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      cv.getContext('2d').drawImage(img, 0, 0, w, h);
+      setCurrentImage(cv);
+    };
+    img.src = rd.result;
+  };
+  rd.readAsDataURL(file);
+}
+function setCurrentImage(cv){
+  currentImage = cv;
+  const key = 'img_'+Date.now();
+  currentImageKey = key;
+  // 存陈列室图片副本：压缩到 1600px 最长边 + JPEG 0.85 + 白底。
+  // 原图可能几 MB，localStorage 降级模式仅约 5MB，直接存原图会撑爆导致图片丢失。
+  const MAX = 1600;
+  let out = cv;
+  if(cv.width > MAX || cv.height > MAX){
+    const k = Math.min(MAX/cv.width, MAX/cv.height);
+    out = document.createElement('canvas');
+    out.width = Math.round(cv.width*k); out.height = Math.round(cv.height*k);
+    const g = out.getContext('2d');
+    g.fillStyle = '#fff'; g.fillRect(0,0,out.width,out.height); // 透明 PNG 转 JPEG 白底
+    g.drawImage(cv, 0, 0, out.width, out.height);
+  }
+  out.toBlob(b => {
+    if(!b) return;
+    idbPut('images', key, b).then(()=>{
+      if(Store.mode==='ls'){
+        let used = 0;
+        try{ for(let i=0;i<localStorage.length;i++){ const k2=localStorage.key(i);
+          if(k2 && k2.indexOf('j_')===0) used += (localStorage.getItem(k2)||'').length; } }catch(e){}
+        if(used > 3.5*1024*1024) toast('存储空间紧张，建议清理陈列室旧记录');
+      }
+    }).catch(e=>{ console.error('存图失败', e); toast('图片存档失败：存储空间不足，请清理陈列室'); });
+  }, 'image/jpeg', 0.85);
+  $('#previewBox').innerHTML = ''; $('#previewBox').appendChild(Object.assign(document.createElement('img'),{src:cv.toDataURL()}));
+  $('#btnStart').disabled = false;
+}
+function makeSampleImage(){
+  const W=1280,H=853; const cv=document.createElement('canvas'); cv.width=W; cv.height=H; const g=cv.getContext('2d');
+  const sky=g.createLinearGradient(0,0,0,H*.75); sky.addColorStop(0,'#6db9ef'); sky.addColorStop(1,'#eaf6ff');
+  g.fillStyle=sky; g.fillRect(0,0,W,H*.75);
+  g.fillStyle='#ffd75e'; g.beginPath(); g.arc(W*.78,H*.22,H*.09,0,7); g.fill();
+  g.fillStyle='rgba(255,215,94,.3)'; g.beginPath(); g.arc(W*.78,H*.22,H*.16,0,7); g.fill();
+  const cloud=(x,y,s)=>{ g.fillStyle='rgba(255,255,255,.9)';
+    [[0,0,1.6],[1.6,-.35,1],[3.2,.1,1.3],[.8,.5,1.2],[2.4,.45,1]].forEach(([dx,dy,r])=>{
+      g.beginPath(); g.arc(x+dx*34*s, y+dy*20*s, 18*s*r, 0, 7); g.fill(); }); };
+  cloud(W*.16,H*.16,1.1); cloud(W*.55,H*.3,.85); cloud(W*.88,H*.13,.7);
+  g.fillStyle='#a3bfd8'; g.beginPath(); g.moveTo(0,H*.6); g.quadraticCurveTo(W*.28,H*.4,W*.52,H*.58);
+  g.quadraticCurveTo(W*.72,H*.68,W*1,H*.5); g.lineTo(W,H*.75); g.lineTo(0,H*.75); g.closePath(); g.fill();
+  g.fillStyle='#5e8c61'; g.beginPath(); g.moveTo(0,H*.78); g.quadraticCurveTo(W*.25,H*.58,W*.5,H*.78);
+  g.quadraticCurveTo(W*.8,H*.92,W*1,H*.68); g.lineTo(W,H); g.lineTo(0,H); g.closePath(); g.fill();
+  g.fillStyle='#7fb069'; g.fillRect(0,H*.78,W,H*.22);
+  const cols=['#ff9aa2','#ffd97d','#fff6d3','#c7f0db'];
+  for(let i=0;i<90;i++){ g.globalAlpha=.75; g.fillStyle=cols[i%4];
+    g.beginPath(); g.arc(Math.random()*W, H*.79+Math.random()*H*.21, 2.5+Math.random()*3.5, 0, 7); g.fill(); }
+  g.globalAlpha=1;
+  setCurrentImage(cv);
+}
+
+/* ================= 开始拼图 ================= */
+function startGame(cols, rows, seed, diffName, lockedList, elapsed){
+  show('play');
+  Game = new PuzzleGame(currentImage, cols, rows, seed, diffName, lockedList, elapsed);
+  if(!Game.completed) Game.saveActiveSoon();
+  requestAnimationFrame(loop);
+}
+function startNew(){
+  if(!currentImage) return;
+  const [cols, rows] = gridFor(currentImage.width, currentImage.height, DIFFS[selDiff].n);
+  const seed = (Math.random()*1e9)|0;
+  startGame(cols, rows, seed, DIFFS[selDiff].name, null);
+}
+function loop(now){
+  if(Game) Game.render(now);
+  if(!Game.completed && Game) updateTimer(now);
+  if(Game) requestAnimationFrame(loop);
+}
+let lastTimerT = 0;
+function updateTimer(now){
+  if(now - lastTimerT < 500) return;
+  lastTimerT = now;
+  $('#timer').textContent = fmtTime(now - Game.startTime);
+}
+
+/* ================= 输入 ================= */
+let pointerActive = false, touchTimer = null;
+function setupInput(){
+  const cvs = $('#gameCanvas');
+  cvs.addEventListener('contextmenu', e => e.preventDefault());
+  cvs.addEventListener('mousedown', e => {
+    if(!Game) return;
+    e.preventDefault();
+    if(e.button === 1){ // 中键翻面
+      const pc = Game.hitTest(e.clientX, e.clientY);
+      if(pc){ Game.flip(pc); return; }
+    }
+    if(e.button === 2){ // 右键放回
+      const pc = Game.hitTest(e.clientX, e.clientY);
+      if(pc){ Game.putBack(pc); return; }
+      if(Game.sel){ Game.putBack(Game.sel.type==='piece'?Game.sel.pc:Game.sel.pieces[0]); }
+      return;
+    }
+    if(e.button !== 0) return;
+    const pc = Game.hitTest(e.clientX, e.clientY);
+    if(pc){ Game.grab(pc, e.clientX, e.clientY); pointerActive = true; cvs.classList.add('dragging'); }
+  });
+  window.addEventListener('mousemove', e => { if(Game && Game.sel) Game.moveTo(e.clientX, e.clientY); });
+  window.addEventListener('mouseup', e => {
+    if(e.button===0 && Game && Game.sel){ Game.release(); pointerActive=false; cvs.classList.remove('dragging'); }
+  });
+  // 触屏
+  cvs.addEventListener('touchstart', e => {
+    if(!Game) return;
+    const t = e.touches[0];
+    const pc = Game.hitTest(t.clientX, t.clientY);
+    if(pc){ Game.grab(pc, t.clientX, t.clientY); pointerActive = true; }
+  }, {passive:false});
+  cvs.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if(Game && Game.sel){ const t=e.touches[0]; Game.moveTo(t.clientX, t.clientY); }
+  }, {passive:false});
+  cvs.addEventListener('touchend', e => {
+    if(Game && Game.sel){ Game.release(); pointerActive = false; }
+  });
+}
+$('#btnFlip').onclick = () => { if(!Game) return;
+  const pc = Game.sel ? (Game.sel.type==='piece'?Game.sel.pc:Game.sel.pieces[0]) : null;
+  if(pc) Game.flip(pc); };
+$('#btnPutBack').onclick = () => { if(!Game) return;
+  const pc = Game.sel ? (Game.sel.type==='piece'?Game.sel.pc:Game.sel.pieces[0]) : null;
+  if(pc) Game.putBack(pc); };
+
+/* ================= 陈列室 ================= */
+async function renderGallery(){
+  const grid = $('#galleryGrid'); grid.innerHTML = '';
+  const list = await idbAll('gallery');
+  list.sort((a,b)=> b.finishedAt.localeCompare(a.finishedAt));
+  if(!list.length){ grid.innerHTML = '<div class="g-empty">还没有完成的拼图，去拼一张吧 🧩</div>'; return; }
+  for(const rec of list){
+    const imgBlob = await idbGet('images', rec.imageKey);
+    const card = document.createElement('div');
+    card.className = 'g-card' + (rec.clean ? ' gold' : '');
+    if(imgBlob){
+      const url = typeof imgBlob === 'string' ? imgBlob : URL.createObjectURL(imgBlob);
+      card.innerHTML = `<img src="${url}">
+        <div class="info"><div class="t">${rec.diffName} · ${rec.cols}×${rec.rows}</div>
+        <div class="s">⏱ ${fmtTime(rec.timeMs)}<br>${rec.finishedAt}</div></div>
+        <div class="del">✕</div>`;
+    } else {
+      card.innerHTML = `<div style="height:150px;background:var(--panel2);display:flex;align-items:center;justify-content:center;color:rgba(74,59,40,.5)">图片缺失</div>
+        <div class="info"><div class="t">${rec.diffName} · ${rec.cols}×${rec.rows}</div>
+        <div class="s">⏱ ${fmtTime(rec.timeMs)}<br>${rec.finishedAt}</div></div>
+        <div class="del">✕</div>`;
+    }
+    card.onclick = e => {
+      if(e.target.classList.contains('del')){ idbDel('gallery', rec.id); idbDel('images', rec.imageKey); renderGallery(); return; }
+      openReview(rec);
+    };
+    grid.appendChild(card);
+  }
+}
+function openReview(rec){
+  show('review');
+  const cvs = $('#reviewCanvas'); const ctx = cvs.getContext('2d');
+  idbGet('images', rec.imageKey).then(blob => {
+    const img = new Image();
+    img.onload = () => {
+      const maxW = $('#reviewStage').clientWidth - 20, maxH = $('#reviewStage').clientHeight - 20;
+      const k = Math.min(maxW/img.width, maxH/img.height, 1);
+      cvs.width = img.width*k; cvs.height = img.height*k;
+      $('#reviewInfo').textContent = `${rec.diffName}（${rec.cols}×${rec.rows}） · ⏱ ${fmtTime(rec.timeMs)}`;
+      const draw = () => {
+        ctx.clearRect(0,0,cvs.width,cvs.height);
+        ctx.drawImage(img, 0,0, cvs.width, cvs.height);
+        if($('#chkLines').checked){
+          const d = makePuzzle(img.width, img.height, rec.cols, rec.rows, rec.seed);
+          ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 2;
+          d.pieces.forEach(pc=>{ tracePath(ctx, pc.pts, 0, 0, k); ctx.stroke(); });
+        }
+      };
+      $('#chkLines').onchange = draw;
+      draw();
+    };
+    img.src = typeof blob === 'string' ? blob : URL.createObjectURL(blob);
+  });
+}
+
+/* ================= 按钮绑定 ================= */
+/* ===== 网页内确认对话框（替代原生 confirm，手机 WebView 也能弹） ===== */
+let confirmResolve = null;
+function webConfirm(msg){
+  return new Promise(res => {
+    $('#confirmMsg').textContent = msg;
+    $('#confirm').classList.remove('hidden');
+    confirmResolve = res;
+  });
+}
+function closeConfirm(val){
+  $('#confirm').classList.add('hidden');
+  const r = confirmResolve; confirmResolve = null;
+  if(r) r(val);
+}
+$('#btnConfirmYes').onclick = () => closeConfirm(true);
+$('#btnConfirmNo').onclick = () => closeConfirm(false);
+$('#confirm').onclick = e => { if(e.target === $('#confirm')) closeConfirm(false); };
+
+$('#btnImport').onclick = () => $('#fileInput').click();
+$('#fileInput').onchange = e => { const f = e.target.files[0]; if(f) loadImageFromFile(f); };
+$('#btnSample').onclick = () => { makeSampleImage(); SFX.click(); };
+$('#btnStart').onclick = async () => {
+  // 有未完成的拼图时提示（防误覆盖进度）
+  const act = await idbGet('active','cur');
+  if(act && act.locked && act.locked.length < act.cols*act.rows){
+    if(!await webConfirm('有未完成的拼图，开始新拼图将丢弃当前进度。确定开始新拼图？')) return;
+  }
+  startNew(); SFX.click();
+};
+$('#btnResume').onclick = () => { resumeGame(); SFX.click(); };
+$('#btnBack').onclick = () => { show('menu'); Game = null; refreshResumeBtn(); SFX.click(); };
+$('#btnGallery').onclick = () => { show('gallery'); renderGallery(); SFX.click(); };
+$('#btnBackMenu2').onclick = () => { show('menu'); refreshResumeBtn(); SFX.click(); };
+$('#btnClearGallery').onclick = async () => { if(await webConfirm('确定清空陈列室？')){ idbAll('gallery').then(l=>l.forEach(r=>idbDel('gallery',r.id))); renderGallery(); } };
+$('#btnToGallery').onclick = () => { $('#done').classList.add('hidden'); show('gallery'); renderGallery(); };
+$('#btnAgain').onclick = () => { $('#done').classList.add('hidden'); show('menu'); refreshResumeBtn(); };
+$('#btnReviewBack').onclick = () => { show('gallery'); renderGallery(); };
+$('#btnHelp').onclick = () => { $('#help').classList.remove('hidden'); };
+$('#btnHelpClose').onclick = () => { $('#help').classList.add('hidden'); };
+$('#btnSkin').onclick = () => { toggleSkinPanel(); SFX.click(); };
+$('#btnSkinMenu').onclick = () => { toggleSkinPanel(); SFX.click(); };
+$('#btnSound').onclick = () => { SFX.on = !SFX.on; $('#btnSound').textContent = SFX.on ? '🔊' : '🔇'; };
+
+/* ================= 美化面板（主题 + 质感） ================= */
+function refreshSkinUI(){
+  document.body.dataset.theme = themeKey;
+  const tk = Object.keys(THEMES), mk = Object.keys(MATERIALS);
+  document.querySelectorAll('.theme-dot').forEach((d,i)=>{ d.classList.toggle('on', tk[i]===themeKey); });
+  document.querySelectorAll('.mat-btn').forEach((b,i)=>{ b.classList.toggle('on', mk[i]===matKey); });
+  const sb = $('#btnSkin'); if(sb) sb.textContent = MAT.name;
+}
+function setMaterial(k){
+  matKey = k; localStorage.setItem('jigsaw_mat', k);
+  MAT = MATERIALS[k] || MATERIALS.paper;
+  refreshSkinUI();
+  if(Game && Game.pieces) renderPieceBitmaps(Game, Game.img, Game.viewScale); // 游戏中切质感立即生效
+  SFX.click();
+}
+function initSkin(){
+  const tr = $('#themeRow'); tr.innerHTML = '';
+  Object.keys(THEMES).forEach(k=>{
+    const d = document.createElement('div');
+    d.className = 'theme-dot'; d.title = THEMES[k].name;
+    d.style.background = `linear-gradient(135deg, ${THEMES[k].bg}, ${THEMES[k].plate})`;
+    d.onclick = () => { themeKey = k; localStorage.setItem('jigsaw_theme', k); refreshSkinUI(); SFX.click(); };
+    tr.appendChild(d);
+  });
+  const mr = $('#matRow'); mr.innerHTML = '';
+  Object.keys(MATERIALS).forEach(k=>{
+    const b = document.createElement('button');
+    b.className = 'mat-btn'; b.textContent = MATERIALS[k].name;
+    b.onclick = () => setMaterial(k);
+    mr.appendChild(b);
+  });
+  refreshSkinUI();
+}
+function toggleSkinPanel(){ $('#skinPanel').classList.toggle('open'); }
+document.addEventListener('click', e => {
+  const p = $('#skinPanel');
+  if(p.classList.contains('open') && !p.contains(e.target) && e.target.id!=='btnSkin' && e.target.id!=='btnSkinMenu') p.classList.remove('open');
+});
+initSkin();
+window.addEventListener('resize', ()=>{ if(Game){ Game.layout(); renderPieceBitmaps(Game, Game.img, Game.viewScale); } });
+
+/* ================= 恢复进度（中途返回 → 菜单"继续拼图"） ================= */
+async function refreshResumeBtn(){
+  const btn = $('#btnResume');
+  try{
+    const act = await idbGet('active','cur');
+    if(act && act.locked && act.locked.length < act.cols*act.rows) btn.classList.remove('hidden');
+    else btn.classList.add('hidden');
+  }catch(e){ btn.classList.add('hidden'); }
+}
+function resumeGame(){
+  idbGet('active','cur').then(act => {
+    if(!act) return;
+    idbGet('images', act.imageKey).then(blob => {
+      if(!blob) return;
+      const img = new Image();
+      img.onload = () => {
+        currentImage = document.createElement('canvas');
+        currentImage.width = img.width; currentImage.height = img.height;
+        currentImage.getContext('2d').drawImage(img, 0, 0);
+        currentImageKey = act.imageKey;
+        startGame(act.cols, act.rows, act.seed, act.diffName, act.locked, act.elapsed);
+        $('#btnResume').classList.add('hidden');
+      };
+      img.onerror = () => { idbDel('active','cur'); refreshResumeBtn(); };
+      img.src = typeof blob==='string' ? blob : URL.createObjectURL(blob);
+    });
+  });
+}
+
+/* ================= 启动 ================= */
+async function init(){
+  buildDiffUI();
+  $('#btnSound').textContent = SFX.on ? '🔊' : '🔇';
+  setupInput();
+  await idbOpen();
+  if(Store.mode==='ls') toast('当前环境本地存储受限，已启用兼容模式（存档仍可用）');
+  await refreshResumeBtn();
+}
+init();
+</script>
+</body>
+</html>
